@@ -51,5 +51,5 @@ jobs:
           git commit -m "Deploy from source commit ${COMMIT_HASH}"
 
           git branch -M main
-          git remote add origin https://x-access-token:${{ env.PERSONAL_ACCESS_TOKEN }}@github.com/leejuhyeong424/leejuhyeong424dev.github.io.git
+          git remote add origin https://x-access-token:${{ env.PERSONAL_ACCESS_TOKEN }}@github.com/leejuhyeong424/leejuhyeong424.github.io.git
           git push --force origin main
