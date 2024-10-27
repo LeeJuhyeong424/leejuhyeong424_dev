@@ -1,0 +1,55 @@
+name: "공개 저장소로 빌드 및 배포"
+on:
+  push:
+    branches:
+      - main
+      - master
+  repository_dispatch:
+    types:
+      - pages-deploy
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 원본 저장소에서 커밋 해시 가져오기
+        id: get_commit_hash
+        run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Ruby 설정
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3
+          bundler-cache: true
+
+      - name: Jekyll 사이트 빌드
+        run: bundle exec jekyll build -d _site
+        env:
+          JEKYLL_ENV: "production"
+
+      - name: 공개 저장소로 배포
+        run: |
+          cd _site
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+
+          # 원본 저장소의 커밋 해시를 사용하여 커밋 메시지 생성
+          git commit -m "Deploy from source commit ${COMMIT_HASH}"
+
+          git branch -M main
+          git remote add origin https://x-access-token:${{ env.PERSONAL_ACCESS_TOKEN }}@github.com/leejuhyeong424/leejuhyeong424dev.github.io.git
+          git push --force origin main

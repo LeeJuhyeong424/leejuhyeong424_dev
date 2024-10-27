@@ -1,0 +1,113 @@
+name: IndexNow 수정
+
+on:
+  repository_dispatch:
+    types:
+      - indexnow-modify
+
+jobs:
+  indexnow_modify_job:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 60초 대기
+        run: |
+          echo "IndexNow 워크플로우 시작 후 60초 대기합니다..."
+          sleep 60
+
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 저장소 업데이트
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase
+
+      - name: 수정된 파일 출력
+        run: |
+          echo "IndexNow 수정 워크플로우가 실행되었습니다."
+          MODIFIED_FILES="${{ join(github.event.client_payload.modified_files, ',') }}"
+          IFS=',' read -ra FILES <<< "$MODIFIED_FILES"
+          for FILE in "${FILES[@]}"; do
+            echo "수정된 파일: $FILE"
+          done
+
+      - name: 파일명에서 제목 추출 및 개별 URL IndexNow API 호출 후 기록
+        env:
+          INDEXNOW_API_KEY: ${{ secrets.INDEXNOW_API_KEY }}
+        run: |
+          set +e
+          MODIFIED_FILES="${{ join(github.event.client_payload.modified_files, ',') }}"
+          IFS=',' read -ra FILES <<< "$MODIFIED_FILES"
+
+          STATUS_FILE_PATH="./indexnow-status.md"
+          if [ ! -f "$STATUS_FILE_PATH" ]; then
+            echo "파일이 존재하지 않습니다: $STATUS_FILE_PATH"
+            exit 1
+          fi
+
+          TEMP_FILE="updated_indexnow_status.md"
+          touch $TEMP_FILE
+
+          # 고정된 헤더 부분 추가
+          echo "---" >> $TEMP_FILE
+          echo "layout: page" >> $TEMP_FILE
+          echo "title: \"IndexNow 처리 상태\"" >> $TEMP_FILE
+          echo "permalink: /indexnow-status/" >> $TEMP_FILE
+          echo "---" >> $TEMP_FILE
+          echo "" >> $TEMP_FILE
+          echo "| 처리 날짜   | 작업 유형   | 응답 결과   | 처리한 링크                                                      |" >> $TEMP_FILE
+          echo "|------------|------------|-------------|------------------------------------------------------------------|" >> $TEMP_FILE
+
+          # 새로운 파일 내용 추가 (최신 정보가 위로 가도록)
+          for FILE in "${FILES[@]}"; do
+              TITLE=$(echo "$FILE" | sed -E 's|_posts/[0-9]{4}-[0-9]{2}-[0-9]{2}-(.*)\.md|\1|')
+              URL="https://leejuhyeong424.github.io/posts/${TITLE}"
+              JSON_PAYLOAD="{\"host\": \"leejuhyeong424.github.io\", \"key\": \"$INDEXNOW_API_KEY\", \"keyLocation\": \"https://leejuhyeong424.github.io/IndexNow_API.txt\", \"urlList\": [\"${URL}\"]}"
+
+              RESPONSE=$(curl -s -X POST "https://api.indexnow.org/indexnow" \
+                -H "Content-Type: application/json" \
+                -d "$JSON_PAYLOAD" -w "\n%{http_code}" || true)
+
+              HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+              CURRENT_DATE_ONLY=$(date -u +"%Y년 %m월 %d일" -d '9 hour')
+              CURRENT_TIME=$(date -u +"%H시 %M분 %S초" -d '9 hour')
+
+              echo "IndexNow API 보낸 링크: $URL"
+              echo "IndexNow API 받은 응답: $HTTP_STATUS"
+
+              case "$HTTP_STATUS" in
+                200) STATUS_TEXT="성공"; STATUS_DETAIL="URL 제출 성공 (반환 코드: $HTTP_STATUS)" ;;
+                202) STATUS_TEXT="검증 중"; STATUS_DETAIL="URL 수신됨. IndexNow 키 검증 보류 중 (반환 코드: $HTTP_STATUS)" ;;
+                400) STATUS_TEXT="잘못된 요청"; STATUS_DETAIL="잘못된 요청 형식 (반환 코드: $HTTP_STATUS)" ;;
+                403) STATUS_TEXT="키 오류"; STATUS_DETAIL="유효하지 않은 키 (반환 코드: $HTTP_STATUS)" ;;
+                422) STATUS_TEXT="호스트 불일치"; STATUS_DETAIL="호스트 불일치 또는 키 불일치 (반환 코드: $HTTP_STATUS)" ;;
+                429) STATUS_TEXT="요청 초과"; STATUS_DETAIL="너무 많은 요청 (반환 코드: $HTTP_STATUS)" ;;
+                *) STATUS_TEXT="알 수 없는 오류"; STATUS_DETAIL="알 수 없는 오류 (반환 코드: $HTTP_STATUS)" ;;
+              esac
+
+              echo "| <span title=\"$CURRENT_TIME\">$CURRENT_DATE_ONLY</span> | 수정 | <span title=\"$STATUS_DETAIL\">$STATUS_TEXT</span> | [$URL]($URL) |" >> $TEMP_FILE
+          done
+
+          # 기존 파일의 나머지 내용 추가 (기존 기록을 새로운 기록 아래에 추가)
+          tail -n +9 "$STATUS_FILE_PATH" >> $TEMP_FILE
+
+          mv $TEMP_FILE $STATUS_FILE_PATH
+
+      - name: 변경 사항 커밋 및 푸시
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add indexnow-status.md
+          git commit -m "Update indexnow-status.md with latest IndexNow processing results"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pages 배포 워크플로우 호출
+        run: |
+          curl -X POST -H "Accept: application/vnd.github+json" \
+               -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+               https://api.github.com/repos/${{ github.repository }}/dispatches \
+               -d "{\"event_type\": \"pages-deploy\"}"

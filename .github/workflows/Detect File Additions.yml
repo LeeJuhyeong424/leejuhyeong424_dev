@@ -1,0 +1,124 @@
+name: 게시물 추적 및 인덱스 호출
+
+on:
+  push:
+    branches:
+      - main  # main 브랜치로의 푸시 이벤트에 대해 실행
+
+jobs:
+  detect_file_changes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 전체 커밋을 가져옴
+
+      - name: 직전 커밋 해시 가져오기
+        id: get_previous_commit
+        run: |
+          echo "직전 커밋 해시를 확인합니다..."
+          CURRENT_COMMIT=$(git rev-parse HEAD)
+          echo "현재 커밋 해시는 $CURRENT_COMMIT 입니다."
+          if git rev-parse HEAD^ >/dev/null 2>&1; then
+            PREVIOUS_COMMIT=$(git rev-parse HEAD^)
+            echo "직전 커밋 해시는 $PREVIOUS_COMMIT 입니다."
+          else
+            echo "직전 커밋이 존재하지 않습니다."
+            PREVIOUS_COMMIT=""
+          fi
+          echo "previous_commit=$PREVIOUS_COMMIT" >> $GITHUB_ENV
+
+      # _posts 폴더의 추가된 파일 감지 및 처리
+      - name: 추가된 파일 처리
+        if: ${{ env.previous_commit != '' }}
+        run: |
+          echo "_posts 폴더의 추가된 Markdown 파일을 감지합니다..."
+          ADDED_FILES=$(git diff --diff-filter=A --name-only ${{ env.previous_commit }} HEAD | grep '^_posts/.*\.md$' || echo "")
+
+          if [ -z "$ADDED_FILES" ]; then
+            echo "_posts 폴더에 추가된 Markdown 파일이 없습니다. 이 단계는 스킵됩니다."
+          else
+            echo "다음 Markdown 파일이 _posts 폴더에 추가되었습니다:"
+            echo "$ADDED_FILES"
+            # 추가된 파일에 대한 후속 작업 수행
+            for FILE in $ADDED_FILES; do
+              echo "추가된 파일: $FILE 처리 중..."
+              # 추가된 파일에 대한 작업 (예: 검증, 빌드 등)
+            done
+            
+            # 추가된 파일 목록을 repository_dispatch 이벤트로 전달
+            ADDED_FILES_JSON=$(echo "$ADDED_FILES" | sed ':a;N;$!ba;s/\n/","/g')
+            ADDED_FILES_JSON="[\"$ADDED_FILES_JSON\"]"
+
+            echo "전달할 추가된 파일 목록: $ADDED_FILES_JSON"  # JSON 형태로 잘 구성되었는지 확인용
+
+            curl -X POST -H "Accept: application/vnd.github+json" \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              https://api.github.com/repos/${{ github.repository }}/dispatches \
+            -d "{\"event_type\": \"indexnow-add\", \"client_payload\": {\"added_files\": $ADDED_FILES_JSON}}"
+          fi
+
+
+      # _posts 폴더의 수정된 파일 감지 및 처리
+      - name: 수정된 파일 처리
+        if: ${{ env.previous_commit != '' }}
+        run: |
+          echo "_posts 폴더의 수정된 Markdown 파일을 감지합니다..."
+          MODIFIED_FILES=$(git diff --diff-filter=M --name-only ${{ env.previous_commit }} HEAD | grep '^_posts/.*\.md$' || echo "")
+
+          if [ -z "$MODIFIED_FILES" ]; then
+            echo "_posts 폴더에 수정된 Markdown 파일이 없습니다. 이 단계는 스킵됩니다."
+          else
+            echo "다음 Markdown 파일이 _posts 폴더에서 수정되었습니다:"
+            echo "$MODIFIED_FILES"
+            # 수정된 파일에 대한 후속 작업 수행
+            for FILE in $MODIFIED_FILES; do
+              echo "수정된 파일: $FILE 처리 중..."
+              # 수정된 파일에 대한 작업 (예: 검증, 테스트 등)
+            done
+
+            # 수정된 파일 목록을 repository_dispatch 이벤트로 전달
+            MODIFIED_FILES_JSON=$(echo "$MODIFIED_FILES" | sed ':a;N;$!ba;s/\n/","/g')
+            MODIFIED_FILES_JSON="[\"$MODIFIED_FILES_JSON\"]"
+
+            echo "전달할 수정된 파일 목록: $MODIFIED_FILES_JSON"  # JSON 형태로 잘 구성되었는지 확인용
+
+            curl -X POST -H "Accept: application/vnd.github+json" \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              https://api.github.com/repos/${{ github.repository }}/dispatches \
+            -d "{\"event_type\": \"indexnow-modify\", \"client_payload\": {\"modified_files\": $MODIFIED_FILES_JSON}}"
+            
+          fi
+
+      # _posts 폴더의 삭제된 파일 감지 및 처리
+      - name: 삭제된 파일 처리
+        if: ${{ env.previous_commit != '' }}
+        run: |
+          echo "_posts 폴더의 삭제된 Markdown 파일을 감지합니다..."
+          DELETED_FILES=$(git diff --diff-filter=D --name-only ${{ env.previous_commit }} HEAD | grep '^_posts/.*\.md$' || echo "")
+
+          if [ -z "$DELETED_FILES" ]; then
+            echo "_posts 폴더에 삭제된 Markdown 파일이 없습니다. 이 단계는 스킵됩니다."
+          else
+            echo "다음 Markdown 파일이 _posts 폴더에서 삭제되었습니다:"
+            echo "$DELETED_FILES"
+            # 삭제된 파일에 대한 후속 작업 수행
+            for FILE in $DELETED_FILES; do
+              echo "삭제된 파일: $FILE 처리 중..."
+              # 삭제된 파일에 대한 작업 (예: 로그 남기기 등)
+            done
+
+            # 삭제된 파일 목록을 repository_dispatch 이벤트로 전달
+            DELETED_FILES_JSON=$(echo "$DELETED_FILES" | sed ':a;N;$!ba;s/\n/","/g')
+            DELETED_FILES_JSON="[\"$DELETED_FILES_JSON\"]"
+
+            echo "전달할 삭제된 파일 목록: $DELETED_FILES_JSON"  # JSON 형태로 잘 구성되었는지 확인용
+
+            curl -X POST -H "Accept: application/vnd.github+json" \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              https://api.github.com/repos/${{ github.repository }}/dispatches \
+            -d "{\"event_type\": \"indexnow-delete\", \"client_payload\": {\"deleted_files\": $DELETED_FILES_JSON}}"
+           
+          fi
