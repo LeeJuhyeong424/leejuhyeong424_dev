@@ -10,6 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: 30초 대기
+        run: |
+          echo "IndexNow 워크플로우 시작 후 30초 대기합니다..."
+          sleep 30
+
       - name: 저장소 체크아웃
         uses: actions/checkout@v4
         with:
