@@ -4,9 +4,10 @@ on:
     branches:
       - main
       - master
-  repository_dispatch:
+  workflow_run:
+    workflows: ["IndexNow 추가", "IndexNow 수정", "IndexNow 삭제"]
     types:
-      - pages-deploy
+      - completed
 
 concurrency:
   group: pages-deploy
