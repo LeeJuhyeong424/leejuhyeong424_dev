@@ -1,7 +1,6 @@
 name: 게시물 추적 및 인덱스 호출
 
 on:
-  workflow_dispatch:
   workflow_run:
     workflows: ["공개 저장소로 빌드 및 배포"]
     types:
@@ -40,7 +39,7 @@ jobs:
       - name: 추가된 파일 처리
         if: ${{ env.previous_commit != '' }}
         run: |
-          sleep 30
+          sleep 10
           echo "_posts 폴더의 추가된 Markdown 파일을 감지합니다..."
           ADDED_FILES=$(git diff --diff-filter=A --name-only ${{ env.previous_commit }} HEAD | grep '^_posts/.*\.md$' || echo "")
 
@@ -72,7 +71,7 @@ jobs:
       - name: 수정된 파일 처리
         if: ${{ env.previous_commit != '' }}
         run: |
-          sleep 30
+          sleep 10
           echo "_posts 폴더의 수정된 Markdown 파일을 감지합니다..."
           MODIFIED_FILES=$(git diff --diff-filter=M --name-only ${{ env.previous_commit }} HEAD | grep '^_posts/.*\.md$' || echo "")
 
@@ -104,7 +103,7 @@ jobs:
       - name: 삭제된 파일 처리
         if: ${{ env.previous_commit != '' }}
         run: |
-          sleep 30
+          sleep 10
           echo "_posts 폴더의 삭제된 Markdown 파일을 감지합니다..."
           DELETED_FILES=$(git diff --diff-filter=D --name-only ${{ env.previous_commit }} HEAD | grep '^_posts/.*\.md$' || echo "")
 
