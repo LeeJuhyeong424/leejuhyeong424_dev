@@ -1,20 +1,21 @@
 name: 게시물 추적 및 인덱스 호출
 
 on:
-  push:
-    branches:
-      - main  # main 브랜치로의 푸시 이벤트에 대해 실행
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["공개 저장소로 빌드 및 배포"]
+    types:
+      - completed
+
+concurrency:
+  group: post-tracking-and-indexing
+  cancel-in-progress: false
 
 jobs:
   detect_file_changes:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 30초 대기
-        run: |
-          echo "게시물 추적 및 인덱스를 호출하기 위해 준비 중입니다. 잠시 대기해 주세요..."
-          sleep 30
-
       - name: 저장소 체크아웃
         uses: actions/checkout@v4
         with:
