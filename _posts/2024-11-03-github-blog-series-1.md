@@ -17,7 +17,9 @@ tags:
         협업
     ]
 excerpt: "이번 글에서는 GitHub의 기본 개념, 주요 기능, 그리고 계정 생성 방법을 단계별로 안내합니다. GitHub Pages와 Chirpy 테마를 사용하여 자신만의 블로그를 구축하는 과정을 이해하고, GitHub의 다양한 기능을 활용해 프로젝트를 관리할 수 있도록 돕습니다. 다음 글에서는 Git의 기본 개념과 버전 관리 기능에 대해 자세히 다룰 예정입니다."
-image: /assets/img/thumbnails/GitHub-Emblem.png
+image: 
+    path: /assets/img/thumbnails/GitHub-Emblem.png
+    lqip: data:image/webp;base64,UklGRnIAAABXRUJQVlA4TGUAAAAvD8ABEAAIwv+5gwg3tm0dz6t++49Tmb1tDMQeRHo7pW2ny8QSNKWVvyJgkiABSDwpAJTAWoRVT0FLXt1Y29SKU9pd3J0X4q6sYeZubqXp4unn5cAiw64HGKQYafhx1IJcvGygAQA=
 ---
 이 블로그는 **GitHub Pages**와 *chirpy 테마*를 이용하여 만들어졌습니다.  
 **GitHub**를 사용하면 **누구나** 손쉽게 자신의 웹사이트를 구축하고 관리할 수 있는데, 저도 이 도구를 활용하여 첫 블로그를 시작하게 되었습니다.
