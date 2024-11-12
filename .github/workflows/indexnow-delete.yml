@@ -6,7 +6,7 @@ on:
       - indexnow-delete
 
 concurrency:
-  group: indexnow-workflow-group
+  group: indexnow-delete
   cancel-in-progress: false
 
 jobs:
@@ -19,6 +19,7 @@ jobs:
 
       - name: 저장소 업데이트
         run: |
+          sleep 15
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git pull --rebase

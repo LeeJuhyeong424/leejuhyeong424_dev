@@ -6,7 +6,7 @@ on:
       - indexnow-add
 
 concurrency:
-  group: indexnow-workflow-group
+  group: indexnow-add
   cancel-in-progress: false
 
 jobs:

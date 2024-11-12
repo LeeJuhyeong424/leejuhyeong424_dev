@@ -1,4 +1,4 @@
-name: Google 검색 색인 수정 요청
+name: "Google 검색 색인 수정 요청"
 
 on:
   repository_dispatch:
@@ -6,7 +6,7 @@ on:
       - indexnow-modify
 
 concurrency:
-  group: google-workflow-group
+  group: indexnow-modify
   cancel-in-progress: false
 
 jobs:

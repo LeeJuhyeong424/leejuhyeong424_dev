@@ -1,4 +1,4 @@
-name: Google 검색 색인 추가 요청
+name: "Google 검색 색인 추가 요청"
 
 on:
   repository_dispatch:
@@ -6,7 +6,7 @@ on:
       - indexnow-add
 
 concurrency:
-  group: google-workflow-group
+  group: indexnow-add
   cancel-in-progress: false
 
 jobs:
@@ -19,7 +19,6 @@ jobs:
 
       - name: 저장소 업데이트
         run: |
-          sleep 15
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git pull --rebase

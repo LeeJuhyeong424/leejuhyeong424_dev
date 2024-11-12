@@ -1,4 +1,4 @@
-name: Google 검색 색인 삭제 요청
+name: "Google 검색 색인 삭제 요청"
 
 on:
   repository_dispatch:
@@ -6,7 +6,7 @@ on:
       - indexnow-delete
 
 concurrency:
-  group: google-workflow-group
+  group: indexnow-delete
   cancel-in-progress: false
 
 jobs:
