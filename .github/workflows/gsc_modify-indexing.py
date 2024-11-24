@@ -104,7 +104,7 @@ def process_modified_files(modified_files):
         match = re.search(r'_posts/\d{4}-\d{2}-\d{2}-(.+)\.md$', file_path)
         if match:
             title = match.group(1)
-            post_url = f"https://leejuhyeong424.github.io/{title}"
+            post_url = f"https://leejuhyeong424.github.io/{title}/"
             print(f"인덱싱 요청 전송 중: {post_url}")
             result, tooltip = send_indexing_request(post_url)
             print(f"응답 결과: {result}, 툴팁: {tooltip}")

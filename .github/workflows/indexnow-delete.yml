@@ -63,7 +63,7 @@ jobs:
           # 새로운 파일 내용 추가 (최신 정보가 위로 가도록)
           for FILE in "${FILES[@]}"; do
               TITLE=$(echo "$FILE" | sed -E 's|_posts/[0-9]{4}-[0-9]{2}-[0-9]{2}-(.*)\.md|\1|')
-              URL="https://leejuhyeong424.github.io/posts/${TITLE}"
+              URL="https://leejuhyeong424.github.io/posts/${TITLE}/"
               JSON_PAYLOAD="{\"host\": \"leejuhyeong424.github.io\", \"key\": \"$INDEXNOW_API_KEY\", \"keyLocation\": \"https://leejuhyeong424.github.io/IndexNow_API.txt\", \"urlList\": [\"${URL}\"]}"
 
               RESPONSE=$(curl -s -X POST "https://api.indexnow.org/indexnow" \
